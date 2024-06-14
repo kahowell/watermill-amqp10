@@ -1,0 +1,25 @@
+services:
+  broker:
+    image: quay.io/artemiscloud/activemq-artemis-broker:latest
+    environment:
+      - AMQ_USER=amq
+      - AMQ_PASSWORD=amq
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:8161:8161"
+    command: |  # customized to tweak the configuration a bit
+      /bin/bash -c "
+        export BROKER_IP=0.0.0.0
+        $$AMQ_HOME/bin/artemis create broker \
+          --allow-anonymous \
+          --user $$AMQ_USER \
+          --password $$AMQ_PASSWORD \
+          --role $$AMQ_ROLE \
+          --name $$AMQ_NAME \
+          --http-host $$BROKER_IP \
+          --host $$BROKER_IP \
+          --relax-jolokia
+        # don't stall producers when disk is over 90% full
+        sed -i 's/max-disk-usage>.*</max-disk-usage>100</' /home/jboss/broker/etc/broker.xml
+        ~/broker/bin/artemis run
+      "
