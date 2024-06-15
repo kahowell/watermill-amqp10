@@ -4,26 +4,39 @@ import (
 	"context"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/pubsub/tests"
+	"github.com/stretchr/testify/require"
+	"log/slog"
+	"os"
 	"testing"
 )
 
 func TestPubSub(t *testing.T) {
-	features := tests.Features{}
-	tests.TestPubSub(t, features, constructor, nil)
+	slogOpts := &slog.HandlerOptions{}
+	slogOpts.Level = slog.LevelDebug
+	handler := slog.NewTextHandler(os.Stdout, slogOpts)
+	slog.SetDefault(slog.New(handler))
+	tests.TestPubSub(t, tests.Features{
+		Persistent: true,
+	}, constructor, nil)
 }
 
 func constructor(t *testing.T) (message.Publisher, message.Subscriber) {
-	conn, err := NewConnection(context.Background(), "localhost", nil)
-	if err != nil {
-		t.Fatal(err)
+	publishConfig := PublishConfig{
+		Capabilities: []string{"queue"},
 	}
-	pub, err := NewPublisher(context.TODO(), conn)
-	if err != nil {
-		t.Fatal(err)
+	subscribeConfig := SubscribeConfig{
+		Capabilities: []string{"queue"},
 	}
-	sub, err := NewSubscriber(context.TODO(), conn)
-	if err != nil {
-		t.Fatal(err)
+	config := Config{
+		Publish:   publishConfig,
+		Subscribe: subscribeConfig,
 	}
+	ctx := context.TODO()
+	conn, err := NewConnection(ctx, config)
+	require.NoError(t, err)
+	pub, err := NewPublisherWithConnection(ctx, config, conn)
+	require.NoError(t, err)
+	sub, err := NewSubscriberWithConnection(ctx, config, conn)
+	require.NoError(t, err)
 	return pub, sub
 }
