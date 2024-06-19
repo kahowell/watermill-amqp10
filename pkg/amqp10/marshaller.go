@@ -9,7 +9,9 @@ const watermillUUIDProperty = "_watermill_message_uuid"
 
 func Marshal(msg *message.Message) (*amqp.Message, error) {
 	amqpMsg := amqp.NewMessage(msg.Payload)
-	amqpMsg.Properties = &amqp.MessageProperties{}
+	amqpMsg.Header = &amqp.MessageHeader{
+		Durable: true,
+	}
 	amqpMsg.ApplicationProperties = make(map[string]interface{})
 	for key, value := range msg.Metadata {
 		amqpMsg.ApplicationProperties[key] = value

@@ -16,16 +16,19 @@ func TestPubSub(t *testing.T) {
 	handler := slog.NewTextHandler(os.Stdout, slogOpts)
 	slog.SetDefault(slog.New(handler))
 	tests.TestPubSub(t, tests.Features{
-		Persistent: true,
+		Persistent:            true,
+		RestartServiceCommand: []string{"podman-compose", "-f", "../../compose.yaml", "restart"},
 	}, constructor, nil)
 }
 
 func constructor(t *testing.T) (message.Publisher, message.Subscriber) {
 	publishConfig := PublishConfig{
 		Capabilities: []string{"queue"},
+		Durable:      true,
 	}
 	subscribeConfig := SubscribeConfig{
 		Capabilities: []string{"queue"},
+		Durable:      true,
 	}
 	config := Config{
 		Publish:   publishConfig,
