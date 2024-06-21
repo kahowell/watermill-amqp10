@@ -25,7 +25,11 @@ func Unmarshal(amqpMsg *amqp.Message) (*message.Message, error) {
 	msg := message.NewMessage(watermillUuid, amqpMsg.GetData())
 	for key, value := range amqpMsg.ApplicationProperties {
 		if key != watermillUUIDProperty {
-			msg.Metadata[key] = value.(string)
+			if value == nil {
+				msg.Metadata[key] = ""
+			} else {
+				msg.Metadata[key] = value.(string)
+			}
 		}
 	}
 	return msg, nil
