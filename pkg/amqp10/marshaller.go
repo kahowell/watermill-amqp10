@@ -2,6 +2,7 @@ package amqp10
 
 import (
 	"github.com/Azure/go-amqp"
+	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
@@ -21,7 +22,12 @@ func Marshal(msg *message.Message) (*amqp.Message, error) {
 }
 
 func Unmarshal(amqpMsg *amqp.Message) (*message.Message, error) {
-	watermillUuid := amqpMsg.ApplicationProperties[watermillUUIDProperty].(string)
+	var watermillUuid string
+	if watermillUuidProperty := amqpMsg.ApplicationProperties[watermillUUIDProperty]; watermillUuidProperty != nil {
+		watermillUuid = watermillUuidProperty.(string)
+	} else {
+		watermillUuid = watermill.NewUUID()
+	}
 	msg := message.NewMessage(watermillUuid, amqpMsg.GetData())
 	for key, value := range amqpMsg.ApplicationProperties {
 		if key != watermillUUIDProperty {
